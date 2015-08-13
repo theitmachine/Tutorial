@@ -1,0 +1,37 @@
+#!/bin/bash
+
+### Specifiy backups to keep, how you want the date formated and where to backup
+KEEP=7 
+TMP=`date "+%Y%m%d%H%M"`
+DATESTR=$TMP 
+TARGET=/opt/backup/$DATESTR 
+
+
+
+mkdir $TARGET 
+
+logger Notify-Backup Script 
+
+logger Notify-Backup SQL 
+
+### Set DBNAME and repeat for each database wanted
+DBNAME=notify 
+/usr/bin/mysqldump --opt --user=root --password=Newpassw0rd $DBNAME  > $TARGET/MySQL-$DBNAME-$DATESTR.sql
+gzip -9 $TARGET/MySQL-$DBNAME-$DATESTR.sql
+
+DBNAME=asterisk
+/usr/bin/mysqldump --opt --user=root --password=Newpassw0rd $DBNAME  > $TARGET/MySQL-$DBNAME-$DATESTR.sql
+gzip -9 $TARGET/MySQL-$DBNAME-$DATESTR.sql
+
+logger Notify-Backup HTML backup
+
+tar -zcvf $TARGET/notify-$DATESTR.tgz /var/www/notify
+
+logger Notify-etc 
+tar -zcvf $TARGET/etc-$DATESTR.tgz /etc
+
+logger Notify-Backup Cleaning Old Backups
+
+find /opt/backup/ -mtime +$KEEP -exec rm -rf {} \;
+
+
